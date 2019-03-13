@@ -1,0 +1,96 @@
+Sub SMAMid()
+    'Declare worksheet
+    Dim ws As Worksheet
+    ' Declare row counter for value
+    Dim i As Long
+    ' Declare last row
+    Dim RowNum As Long
+    ' Declare variable to hold running total volume
+    Dim RunTotal As Double
+    ' Declare variable to offset value writing
+    Dim Results As Integer
+    ' Set variable to row below headers
+    Results = 2
+    ' Declare variable to store open price
+    Dim OpenPrice As Double
+    ' Declare variable to store close price
+    Dim ClosePrice As Double
+    ' Declare variable to store percent change
+    Dim PctChg As Double
+    ' Declare variable to hold first Looping
+    Dim FirstTime As Integer
+    FirstTime = 0
+    ' Declare variable to hold yearly change (openprice and closeprice)
+    Dim YrChg As Double
+
+    ' Begin looping over worksheets
+    For Each ws In Worksheets
+        ' Write headers in print area
+        ws.Cells(1, 9).Value = "Ticker"
+        ws.Cells(1, 10).Value = "Yearly Change"
+        ws.Cells(1, 11).Value = "Percent Change"
+        ws.Cells(1, 12).Value = "Total Volume"
+        ' Determine number of occupied rows for the sheet
+        RowNum = ws.Cells(Rows.Count, 1).End(xlUp).Row
+
+        ' Begin over rows in sheet
+        For i = 2 To RowNum
+            ' Test if ticker of current row is same as next row (all but last condition)
+            If ws.Cells(i, 1) = ws.Cells(i, 1).Offset(1, 0) Then
+                ' If ticker is same as the one below, increment firsttime
+                FirstTime = FirstTime + 1
+                ' Add volume cell for current row to running total
+                RunTotal = RunTotal + ws.Cells(i, 7)
+                ' Test if this is first time through loop for ticker in question
+                If FirstTime = 1 Then
+                 ' If it is, then grab open price for this first row of ticker,
+                    ' and store for subsequent percent change calculation
+                    OpenPrice = ws.Cells(i, 3)
+                ' If it isn't the first time through the loop, do nothing
+                Else
+                End If
+                                
+            Else
+                ' When the loop hits the last row of the current ticker the volume is added
+                ' to running total as normal
+                RunTotal = RunTotal + ws.Cells(i, 7)
+                ' Write the ticker and final volume total to the print area
+                ws.Cells(Results, 9) = ws.Cells(i, 1)
+                ws.Cells(Results, 12) = RunTotal
+                ' Grab the value of closing price in last row and store for pct chg calc
+                ClosePrice = ws.Cells(i, 6)
+                ' Calculate percent change and yearly change with the stored variables
+                ' If statement prevents dividing by zero if stock values are 0
+                If OpenPrice <> 0 Then
+                    YrChg = ClosePrice - OpenPrice
+                    PctChg = ((ClosePrice - OpenPrice) / OpenPrice)
+                Else
+                    PctChg = 0
+                    YrChg = 0
+                End If
+                
+                ' Write percent change to print area using the results
+                ws.Cells(Results, 10) = YrChg
+                   ' Evaluate whether the value is above or below 0, and color interior of cell
+                    If ws.Cells(Results, 10).Value > 0 Then
+                        ws.Cells(Results, 10).Interior.ColorIndex = 4
+                    Else
+                        ws.Cells(Results, 10).Interior.ColorIndex = 3
+                    End If
+                ws.Cells(Results, 11) = PctChg
+                ws.Cells(Results, 11).NumberFormat = "0.00%"
+                ' Reset running total for next ticker group
+                RunTotal = 0
+                ' Increment the results for the printing so next group doesn't overwrite
+                Results = Results + 1
+                ' Reset first time through loop counter for next ticker group
+                FirstTime = 0
+             End If
+        Next i
+    ' Reset results for next worksheet so printing starts again at row 2
+    Results = 2
+    ' Repeat proccess for next worksheet
+    Next ws
+
+
+End Sub
